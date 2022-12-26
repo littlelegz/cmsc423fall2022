@@ -1,0 +1,21 @@
+pub fn binary_search(target: &str, sa: Vec<usize>, genome: &str) -> (u32, u32) {
+    let mut low: i32 = 0;
+    let mut high: i32 = sa.len() as i32 - 1;
+    let mut comparisons: u32 = 0;
+ 
+    while low <= high {
+        let middle: i32 = (high + low) / 2;
+        if let current = &genome[sa[middle as usize]..] {
+            let result = compare(target, &current);
+            comparisons += result.1;
+
+            if result.0 == Ordering::Less {
+                high = middle - 1
+            }
+            if result.0 == Ordering::Greater {
+                low = middle + 1
+            }
+        }
+    }
+    return (low as u32, comparisons);
+}

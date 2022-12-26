@@ -1,0 +1,107 @@
+pub fn complete_search(query: &str, fm_struct: &FMindex) -> (Vec<usize>, u32) {
+    let mut hits: Vec<usize> = Vec::new();
+    let mut match_len: u32 = 0;
+    let mut possible: Vec<u32> = Vec::new();
+    let mut temp_possible: Vec<u32> = Vec::new();
+    //A offset is just 1 since there's 1 '&'
+    let c_offset: u32 = 1 + fm_struct.first_column[1];
+    let g_offset: u32 = c_offset + fm_struct.first_column[2];
+    let t_offset: u32 = g_offset + fm_struct.first_column[3];
+    let rev_query: &str = &query.chars().rev().collect::<String>();
+    let head_rest = split_first_char(rev_query).unwrap();
+
+    //println!("Split into: {} and {}", head_rest.0, head_rest.1);
+    // Grabbing index of rows in first column with head
+    match head_rest.0 {
+        'A' => possible = (1..c_offset).collect(),
+        'C' => possible = (c_offset..g_offset).collect(),
+        'G' => possible = (g_offset..t_offset).collect(),
+        'T' => possible = (t_offset..fm_struct.bwt.len() as u32).collect(),
+        _ => ()
+    }
+
+    // Iterate over current possibilities
+
+    // User lookup table instead of iteratoing over possibilities
+    // check for match of new char
+    for c in head_rest.1.chars() {
+        //println!("Now checking char: {}, possible size of: {}", c, possible.len());
+        for i in &possible {
+            if fm_struct.bwt[*i as usize] == c.to_string() {
+                match c {
+                    'A' => temp_possible.push(occ(*i as usize, 'A', &fm_struct.tally)),
+                    'C' => temp_possible.push(c_offset + occ(*i as usize, 'C', &fm_struct.tally) - 1),
+                    'G' => temp_possible.push(g_offset + occ(*i as usize, 'G', &fm_struct.tally) - 1),
+                    'T' => temp_possible.push(t_offset + occ(*i as usize, 'T', &fm_struct.tally) - 1),
+                    _ => ()
+                }
+            }
+        }
+        possible = Vec::new();
+        possible.append(&mut temp_possible);
+    }
+
+    // Trivially returning match_len since in complete mode, its either query len or 0
+    if possible.len() > 0 {
+        match_len = query.len() as u32;
+        for i in possible {
+            hits.push(fm_struct.sa[i as usize]);
+        }
+    }
+
+    return (hits, match_len);
+}
+
+pub fn complete_search(query: &str, fm_struct: &FMindex) -> (Vec<usize>, u32) {
+    let mut hits: Vec<usize> = Vec::new();
+    let mut match_len: u32 = 0;
+    let mut possible: (u32, u32) = (0, 0);
+    //A offset is just 1 since there's 1 '&'
+    let c_offset: u32 = 1 + fm_struct.first_column[1];
+    let g_offset: u32 = c_offset + fm_struct.first_column[2];
+    let t_offset: u32 = g_offset + fm_struct.first_column[3];
+    let rev_query: &str = &query.chars().rev().collect::<String>();
+    let head_rest = split_first_char(rev_query).unwrap();
+
+    //println!("Split into: {} and {}", head_rest.0, head_rest.1);
+    // Grabbing index of rows in first column with head
+    match head_rest.0 {
+        'A' => possible = (1, c_offset),
+        'C' => possible = (c_offset, g_offset),
+        'G' => possible = (g_offset, t_offset),
+        'T' => possible = (t_offset, fm_struct.bwt.len() as u32),
+        _ => ()
+    }
+
+    // Iterate over current possibilities
+
+    // User lookup table instead of iterating over possibilities
+    // check for match of new char
+    for c in head_rest.1.chars() {
+        println!("Now checking char: {}, possible size of: {:?}", c, possible.1 - possible.0);
+        match c {
+            'A' => possible = (occ(possible.0 as usize, 'A', &fm_struct.tally), occ((possible.1 - 1) as usize, 'A', &fm_struct.tally) + 1),
+            'C' => possible = (c_offset + occ(possible.0 as usize, 'C', &fm_struct.tally) - 1, c_offset + occ((possible.1 - 1) as usize, 'C', &fm_struct.tally)),
+            'G' => possible = (g_offset + occ(possible.0 as usize, 'C', &fm_struct.tally) - 1, g_offset + occ((possible.1 - 1) as usize, 'C', &fm_struct.tally)),
+            'T' => possible = (t_offset + occ(possible.0 as usize, 'C', &fm_struct.tally) - 1, t_offset + occ((possible.1 - 1) as usize, 'C', &fm_struct.tally)),
+            _ => ()
+        }
+        /* match c {
+            'A' => possible.push(occ(*i as usize, 'A', &fm_struct.tally)),
+            'C' => possible.push(c_offset + occ(*i as usize, 'C', &fm_struct.tally) - 1),
+            'G' => possible.push(g_offset + occ(*i as usize, 'G', &fm_struct.tally) - 1),
+            'T' => possible.push(t_offset + occ(*i as usize, 'T', &fm_struct.tally) - 1),
+            _ => ()
+        } */
+    }
+
+    // Trivially returning match_len since in complete mode, its either query len or 0
+    if possible.1 as i32 - possible.0 as i32 > 0 {
+        match_len = query.len() as u32;
+        for i in (possible.0..possible.1) {
+            hits.push(fm_struct.sa[i as usize]);
+        }
+    }
+
+    return (hits, match_len);
+}

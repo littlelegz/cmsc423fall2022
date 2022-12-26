@@ -1,0 +1,22 @@
+[package]
+name = "CMSC423_F22_A2_wrk"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "querysa"
+path = "src/querysa.rs"
+
+[[bin]]
+name = "buildsa"
+path = "src/main.rs"
+
+[[bin]]
+name = "inspectsa"
+path = "src/inspectsa.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = {version = "1.0.145", features = ["derive"]} 
+bincode = "1.2.1"

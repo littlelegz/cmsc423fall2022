@@ -1,0 +1,13 @@
+[package]
+name = "CMSC423_F22_A0"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+edition = "2021"
+name = "fasta_stats"
+path = "src/main.rs"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+json = "0.12.4"
